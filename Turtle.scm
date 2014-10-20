@@ -14,12 +14,12 @@
 (define (rad-to-deg radians)
   (* radians 57.2957795))
 
-(define (angle-wrap angle) ; Only for degrees
-  (let* ((whole (trunc angle))
-	 (remainder (- angle whole))
-	 (sign (if (< angle 0) -1.0 1.0)))
-    (print "angle-wrap is broken dammit!")
-    (* (+ (abs (modulo whole 360)) remainder) sign)))
+
+(define (angle-wrap angle) ;Keep and eye on this...
+  (let ((a (- angle (* (/ (truncate angle) 360.0) 360.0))))
+    (if (< a 0)
+	(set! a (+ a 360.0)))
+    a))
 
 (define (alist-copy alist)
             (if (null? alist)
@@ -46,7 +46,7 @@
   `((x ,x)
     (y ,y)
     (direction ,direction)
-    (color "#00FF00") ; Hex color default is green for fun
+    (color "#009900") ; Hex color default is green for fun
     (drawing #t)
     (draw-command #f)))
 
