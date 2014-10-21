@@ -15,11 +15,13 @@
   (* radians 57.2957795))
 
 
-(define (angle-wrap angle) ;Keep and eye on this...
-  (let ((a (- angle (* (/ (truncate angle) 360.0) 360.0))))
-    (if (< a 0)
-	(set! a (+ a 360.0)))
-    a))
+(define (angle-wrap angle)
+  (let* ((num_times (truncate (/ angle 360.0)))
+	 (whole-part (* num_times 360.0))
+	 (reduced (- angle whole-part)))
+    (if (< reduced 0.0)
+	(+ 360.0 reduced)
+	reduced)))
 
 (define (alist-copy alist)
             (if (null? alist)
