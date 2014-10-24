@@ -11,14 +11,46 @@
    ;to save and restore state and undo
 
 ;; Utility functions
+
+
+(macro (help macro-name)
+  "Returns the DocString of a procedure or macro
+   (help macro-name)"
+  (let ((expr (gensym)))
+    `(let ((,expr (get-closure-code ,(cadr macro-name))))
+       (and ,expr
+            (cond
+              ((string? (caddr ,expr))
+                (caddr ,expr))
+              ((and (pair? (caddr ,expr)) (eq? 'apply (caaddr ,expr)))
+                (caddr (cadr (caddr ,expr))))
+              #f )))))
+
+(define-macro (repeat num-times . body)
+  "Example (repeat 6 (print 'hello))"
+  `(let ((counter 0))
+     (while (< counter ,num-times)
+	    ,@body
+	    (set! counter (+ counter 1)))))
+
+(define-macro (do-times variable num-times . body)
+  "Example (do-times i 6 (print i))"
+  `(let ((,variable 0))
+     (while (< ,variable ,num-times)
+	    ,@body
+	    (set! ,variable (+ ,variable 1)))))
+
 (define (deg-to-rad degrees)
+  "Turns degrees into radians"
   (* degrees 0.0174532925))
 
 (define (rad-to-deg radians)
+  "Turns radians into degrees"
   (* radians 57.2957795))
 
 (define (angle-wrap angle)
-  "Forces angles to be [0 360)"
+  "Forces angles to be [0 360)
+   (angle-wrap angle)"
   (let* ((num_times (truncate (/ angle 360.0)))
 	 (whole-part (* num_times 360.0))
 	 (reduced (- angle whole-part)))
@@ -26,18 +58,14 @@
 	(+ 360.0 reduced)
 	reduced)))
 
-(define (alist-copy alist)
-  (if (null? alist)
-      '()
-      (cons (cons (car (car alist)) (cdr (car alist)))
-	    (alist-copy (cdr alist)))))
-
 (define (direction x y x2 y2)
-  "Get direction between points"
+  "Get direction between points
+   (direction x y x2 y2)"
   (modulo (rad-to-deg (atan (- y2 y) (- x2 x))) 360))
 
 (define (distance x y x2 y2)
-  "Preform a basic distance calculation"
+  "Preform a basic distance calculation
+   (distance x y x2 y2)"
   (let ((a (- x2 x))
 	(b (- y2 y)))
     (sqrt (+ (pow a 2) (pow b 2)))))
@@ -66,7 +94,8 @@
   (draw-line x y x2 y2))
 
 (define (make-Turtle x y direction)
-  "Make a fresh turtle with x y and direction"
+  "Make a fresh turtle with x y and direction
+   (make-Turtle x y direction)"
   `((x ,x)
     (y ,y)
     (direction ,direction)
@@ -87,23 +116,27 @@
 
 ;; Relative movement commands
 (define (color hex-string Turtle)
-  "Set the color of the turtle ex #FFFFFF"
+  "Set the color of the turtle ex #FFFFFF
+   (color hex-string Turtle)"
   (set-attribute! 'color hex-string Turtle))
 
 (define (rt direction Turtle)
-  "Rotate right current direction + direction"
+  "Rotate right current direction + direction
+   (rt direction Turtle)"
   (set-attribute! 'direction
 		  (angle-wrap (- (get-attribute 'direction Turtle) direction))
 		  Turtle))
 
 (define (lt direction Turtle)
-  "Rotate left current direction + direction"
+  "Rotate left current direction + direction
+   (lt direction Turtle)"
   (set-attribute! 'direction
 		  (angle-wrap (+ (get-attribute 'direction Turtle) direction))
 		  Turtle))
 
 (define (fd steps Turtle)
-  "Move steps in direction currently facing"
+  "Move steps in direction currently facing
+   (fd steps Turtle)"
   (let* ((direction (deg-to-rad (get-attribute 'direction Turtle)))
 	 (last-x (get-attribute 'x Turtle))
 	 (last-y (get-attribute 'y Turtle))
@@ -115,7 +148,8 @@
 	(Turtle-draw-line last-x last-y new-x new-y Turtle))))
 
 (define (bk steps Turtle)
-  "Move steps backwards while keeping currently facing direction"
+  "Move steps backwards while keeping currently facing direction
+  (bk steps Turtle)"
   (let* ((direction (deg-to-rad (+ 180 (get-attribute 'direction Turtle))))
 	 (last-x (get-attribute 'x Turtle))
 	 (last-y (get-attribute 'y Turtle))
@@ -127,22 +161,26 @@
 	(Turtle-draw-line last-x last-y new-x new-y Turtle))))
 
 (define (pu Turtle)
-  "Pen up, disable drawing"
+  "Pen up, disable drawing 
+   (pu Turtle)"
   (set-attribute! 'drawing #f Turtle))
 
 (define (pd Turtle)
-  "Pen down, enable drawing"
+  "Pen down, enable drawing
+   (pd Turtle)"
   (set-attribute! 'drawing #t Turtle))
 
 (define (cs)
-  "Clears all data on current image"
+  "Clears all data on current image
+   (cs)"
   (gimp-selection-all (get-current-image))
   (gimp-edit-clear (get-current-layer))
   (gimp-selection-none (get-current-image)))
 
 (define (show Turtle)
-  "This command shoves a turtle shape onto the canvas, undo to remove it"
-  (print "Press undo to remove this turtle, it is drawn to canvas")
+  "This command shoves a turtle shape onto the canvas, undo to remove it
+   (show Turtle)"
+  (print "Press undo to remove this turtle shape, it is drawn to canvas")
   ; Impliment some special turtle displaying layer later maybe...
   ; Also look into those state saving and undo macros to make it go away
   (let ((pen-state (get-attribute 'drawing Turtle))
@@ -168,17 +206,40 @@
 
 ;; Absolute movement commands
 (define (mv x y Turtle)
-  "Move to position"
+  "Move to position
+   (mv x y Turtle)"
   (set-attribute! 'x x Turtle)
   (set-attribute! 'y y Turtle))
 
 (define (lk angle Turtle)
-  "Look and face an angle"
+  "Look and face an angle
+   (lk angle Turtle)"
   (set-attribute! 'direction (angle-wrap angle) Turtle))
 
 (define (home Turtle)
-  "Move the Turtle to the center of the image and face up"
+  "Move the Turtle to the center of the image and face up
+   (home Turtle)"
   (mv (/ (car (gimp-image-width (get-current-image))) 2.0)
       (/ (car (gimp-image-height (get-current-image))) 2.0)
       Turtle)
   (lk 90 Turtle))
+
+;; High level function example
+(define (draw-star side-length Turtle)
+  "Draw a 5 point star in current direction
+   (draw-star side-length Turtle)"
+  (repeat 5
+	  (fd side-length Turtle)
+	  (rt 144 Turtle)))
+
+(define (draw-rectangle height width Turtle)
+  "Draw a rectangle in current direction
+   (draw-rectangle height width Turtle)"
+  (fd width Turtle) (rt 90 Turtle)
+  (fd height Turtle) (rt 90 Turtle)
+  (fd width Turtle) (rt 90 Turtle)
+  (fd height Turtle) (rt 90 Turtle))
+
+
+
+
