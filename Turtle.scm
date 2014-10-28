@@ -65,7 +65,8 @@
 (define (direction x y x2 y2)
   "Get direction between points
    (direction x y x2 y2)"
-  (modulo (rad-to-deg (atan (- y2 y) (- x2 x))) 360))
+  ;Note, the y is inverted as LOGO considers "up" 90 degrees
+  (angle-wrap (rad-to-deg (atan (- y y2) (- x2 x)))))
 
 (define (distance x y x2 y2)
   "Preform a basic distance calculation
@@ -209,9 +210,19 @@
     (set-attribute! 'drawing pen-state Turtle)
     (set-attribute! 'direction angle-state Turtle)))
 
+(define (fd-to x y Turtle)
+  "Move to a position, drawing if pen is down
+   (mv-to x y Turtle)"
+  (let* ((turt-x (get-attribute 'x Turtle))
+	 (turt-y (get-attribute 'y Turtle))
+	 (d (direction turt-x turt-y x y))
+	 (l (distance turt-x turt-y x y)))
+    (lk d Turtle)
+    (fd l Turtle)))
+
 ;; Absolute movement commands
 (define (mv x y Turtle)
-  "Move to position
+  "jump to position do not draw
    (mv x y Turtle)"
   (set-attribute! 'x x Turtle)
   (set-attribute! 'y y Turtle))
@@ -251,3 +262,15 @@
   (let ((angle (/ 360.0 num-sides)))
     (repeat num-sides (fd side-length Turtle) (rt angle Turtle))))
 
+(define (draw-arrow-head Turtle)
+  (lt 170 Turtle)
+  (fd 20 Turtle)
+  (bk 20 Turtle)
+  (rt (* 2.0 170) Turtle)
+  (fd 20 Turtle)
+  (bk 20 Turtle)
+  (lt 170 Turtle))
+
+(define (draw-arrow-to x y Turtle)
+  (fd-to x y Turtle)
+  (draw-arrow-head Turtle))
