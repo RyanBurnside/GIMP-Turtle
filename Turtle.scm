@@ -7,8 +7,12 @@
 ;; Turtle is just an associative list but we write some nice methods
 ;; To give the illusion of a modern class
 
-;; TODO Add a with-state and with-undo macros 
+;*** TODO
+;; Add a with-state and with-undo macros 
    ;to save and restore state and undo
+;; Possibly use stroked paths instead of lines, let user stroke path
+;; Add a macro to copy a turtle
+;***
 
 ;; Utility functions
 
@@ -51,8 +55,8 @@
 (define (angle-wrap angle)
   "Forces angles to be [0 360)
    (angle-wrap angle)"
-  (let* ((num_times (truncate (/ angle 360.0)))
-	 (whole-part (* num_times 360.0))
+  (let* ((num-times (truncate (/ angle 360.0)))
+	 (whole-part (* num-times 360.0))
 	 (reduced (- angle whole-part)))
     (if (< reduced 0.0)
 	(+ 360.0 reduced)
@@ -79,7 +83,8 @@
   (car (gimp-image-get-active-layer (vector-ref (cadr (gimp-image-list)) 0))))
 
 (define (draw-line x y x2 y2)
-  "Generic function to draw line in current brush"
+  "Generic function to draw line in current brush
+   (draw-line x y x2 y2)"
   (let ((layer (get-current-layer))
 	(points (cons-array 4 'double)))
     (aset points 0 x)
@@ -240,6 +245,9 @@
   (fd width Turtle) (rt 90 Turtle)
   (fd height Turtle) (rt 90 Turtle))
 
-
-
+(define (draw-n-gon num-sides side-length Turtle)
+  "Draw an n-gon of num-sides and side-length from turtle's facing position
+   (draw-n-gon num-sides side-length Turtle)"
+  (let ((angle (/ 360.0 num-sides)))
+    (repeat num-sides (fd side-length Turtle) (rt angle Turtle))))
 
