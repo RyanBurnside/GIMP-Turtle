@@ -8,12 +8,15 @@
 ;; To give the illusion of a modern class
 
 ;*** TODO
-;; Add a with-state and with-undo macros 
-   ;to save and restore state and undo
+;; Add a with-state macro
 ;; Possibly use stroked paths instead of lines, let user stroke path
 ;; Add a macro to copy a turtle
 ;***
 
+
+;; NOTES
+;; The turtle will not consider the current context when drawing Script-Fu error
+;; The functions to get current image and layer assume most recently created
 ;; Utility functions
 
 
@@ -43,6 +46,13 @@
      (while (< ,variable ,num-times)
 	    ,@body
 	    (set! ,variable (+ ,variable 1)))))
+
+(define-macro (with-undo-group . body)
+  `(apply 
+    (lambda()
+    (gimp-image-undo-group-start (get-current-image))
+    ,@body
+    (gimp-image-undo-group-end (get-current-image)))))
 
 (define (deg-to-rad degrees)
   "Turns degrees into radians"
@@ -87,11 +97,7 @@
   "Generic function to draw line in current brush
    (draw-line x y x2 y2)"
   (let ((layer (get-current-layer))
-	(points (cons-array 4 'double)))
-    (aset points 0 x)
-    (aset points 1 y)
-    (aset points 2 x2)
-    (aset points 3 y2)
+	(points (vector x y x2 y2)))
     (gimp-paintbrush-default layer 4 points)))
 
 (define (Turtle-draw-line x y x2 y2 Turtle)
@@ -188,27 +194,27 @@
    (show Turtle)"
   (print "Press undo to remove this turtle shape, it is drawn to canvas")
   ; Impliment some special turtle displaying layer later maybe...
-  ; Also look into those state saving and undo macros to make it go away
-  (let ((pen-state (get-attribute 'drawing Turtle))
-	(angle-state (get-attribute 'direction Turtle))
-	(x (get-attribute 'x Turtle))
-	(y (get-attribute 'y Turtle))
-	(scale 24.0))
-    (gimp-image-undo-group-start (get-current-image))
-    (pu Turtle)
-    (fd (* scale .625) Turtle)
-    (pd Turtle)
-    (rt (+ 180.0 26.5651) Turtle)
-    (fd (* scale 1.118) Turtle)
-    (lt (- 296.565 180.0) Turtle)
-    (fd scale Turtle)
-    (lt (- 296.565 180.0) Turtle)
-    (fd (* scale 1.118) Turtle)
-    (gimp-image-undo-group-end (get-current-image))
-    (set-attribute! 'x x Turtle)
-    (set-attribute! 'y y Turtle)
-    (set-attribute! 'drawing pen-state Turtle)
-    (set-attribute! 'direction angle-state Turtle)))
+  (with-undo-group
+   (let ((pen-state (get-attribute 'drawing Turtle))
+	 (angle-state (get-attribute 'direction Turtle))
+	 (x (get-attribute 'x Turtle))
+	 (y (get-attribute 'y Turtle))
+	 (scale 24.0))
+     (gimp-image-undo-group-start (get-current-image))
+     (pu Turtle)
+     (fd (* scale .625) Turtle)
+     (pd Turtle)
+     (rt (+ 180.0 26.5651) Turtle)
+     (fd (* scale 1.118) Turtle)
+     (lt (- 296.565 180.0) Turtle)
+     (fd scale Turtle)
+     (lt (- 296.565 180.0) Turtle)
+     (fd (* scale 1.118) Turtle)
+     (gimp-image-undo-group-end (get-current-image))
+     (set-attribute! 'x x Turtle)
+     (set-attribute! 'y y Turtle)
+     (set-attribute! 'drawing pen-state Turtle)
+     (set-attribute! 'direction angle-state Turtle))))
 
 (define (fd-to x y Turtle)
   "Move to a position, drawing if pen is down
@@ -242,35 +248,47 @@
 
 ;; High level function example
 (define (draw-star side-length Turtle)
-  "Draw a 5 point star in current direction
+   "Draw a 5 point star in current direction
    (draw-star side-length Turtle)"
-  (repeat 5
-	  (fd side-length Turtle)
-	  (rt 144 Turtle)))
+   (with-undo-group
+    (repeat 5
+	    (fd side-length Turtle)
+	    (rt 144 Turtle))))
 
 (define (draw-rectangle height width Turtle)
   "Draw a rectangle in current direction
    (draw-rectangle height width Turtle)"
-  (fd width Turtle) (rt 90 Turtle)
-  (fd height Turtle) (rt 90 Turtle)
-  (fd width Turtle) (rt 90 Turtle)
-  (fd height Turtle) (rt 90 Turtle))
+  (with-undo-group
+   (fd width Turtle) (rt 90 Turtle)
+   (fd height Turtle) (rt 90 Turtle)
+   (fd width Turtle) (rt 90 Turtle)
+   (fd height Turtle) (rt 90 Turtle)))
 
 (define (draw-n-gon num-sides side-length Turtle)
-  "Draw an n-gon of num-sides and side-length from turtle's facing position
+   "Draw an n-gon of num-sides and side-length from turtle's facing position
    (draw-n-gon num-sides side-length Turtle)"
-  (let ((angle (/ 360.0 num-sides)))
-    (repeat num-sides (fd side-length Turtle) (rt angle Turtle))))
+   (with-undo-group
+    (let ((angle (/ 360.0 num-sides)))
+      (repeat num-sides (fd side-length Turtle) (rt angle Turtle)))))
 
 (define (draw-arrow-head Turtle)
-  (lt 170 Turtle)
-  (fd 20 Turtle)
-  (bk 20 Turtle)
-  (rt (* 2.0 170) Turtle)
-  (fd 20 Turtle)
-  (bk 20 Turtle)
-  (lt 170 Turtle))
+  "Put a small arrow head in facing direction
+   (draw-arrow-head Turtle)"
+  (with-undo-group
+   (lt 170 Turtle)
+   (fd 20 Turtle)
+   (bk 20 Turtle)
+   (rt (* 2.0 170) Turtle)
+   (fd 20 Turtle)
+   (bk 20 Turtle)
+   (lt 170 Turtle)))
 
 (define (draw-arrow-to x y Turtle)
-  (fd-to x y Turtle)
-  (draw-arrow-head Turtle))
+  "Make turtle draw to a point and put an arrow head on end
+   (draw-arrow-to x y Turtle)"
+  (with-undo-group
+   (fd-to x y Turtle)
+   (draw-arrow-head Turtle)))
+
+
+
