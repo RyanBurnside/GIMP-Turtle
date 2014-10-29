@@ -11,6 +11,9 @@
 ;; Add a with-state macro
 ;; Possibly use stroked paths instead of lines, let user stroke path
 ;; Add a macro to copy a turtle
+;; Possibly add a flood fill command like some other LOGO systems
+
+;; Consult UCB Logo implimentation for more ideas
 ;***
 
 
@@ -185,9 +188,10 @@
 (define (cs)
   "Clears all data on current image
    (cs)"
-  (gimp-selection-all (get-current-image))
-  (gimp-edit-clear (get-current-layer))
-  (gimp-selection-none (get-current-image)))
+  (with-undo-group
+   (gimp-selection-all (get-current-image))
+   (gimp-edit-clear (get-current-layer))
+   (gimp-selection-none (get-current-image))))
 
 (define (show Turtle)
   "This command shoves a turtle shape onto the canvas, undo to remove it
@@ -289,6 +293,3 @@
   (with-undo-group
    (fd-to x y Turtle)
    (draw-arrow-head Turtle)))
-
-
-
