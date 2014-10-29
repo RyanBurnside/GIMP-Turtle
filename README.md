@@ -16,7 +16,7 @@ You will give TinyScheme instructions here using my Turtle library.
 
 Turtles?:
 
-To start you need to define a Turtle which is another name for a movable position that you will be drawing with. A Turtle has a pen attached to his tail, you can raise or lower the pen with the pd and pu commands.
+To start you need to define a Turtle which is another name for a movable position that you will be drawing with. A Turtle has a pen attached to his tail, you can raise or lower the pen with the pu and pd commands.
 
 These stand for pen up and pen down. By default a turtle has his pen down.
 
@@ -24,18 +24,23 @@ A Turtle keeps track of his position, color, direction and pen.
 
 Let's try an example type in each line and hit ENTER key.
 First, we need to make a new Turtle and call him "t".
+
 (define t (make-Turtle 0 0 0))
 
 Now, we want to move him to the center of the screen, tell him to go "home"
+
 (home t)
 
 Now, let's tell him to look at 0 degrees (points left).
+
 (lk 0 t)
 
 Good, lets tell him to move forward 100 pixels.
+
 (fd 100 t)
 
 A line appears! Lets tell him to turn right 90 degrees.
+
 (rt 90 t)
 
 Repeat the last two steps until you form a 100 x 100 pixel square!
@@ -60,4 +65,5 @@ I'm not a professional programmer but encourage you to learn a dialect of LISP
 It may not be trendy but there are a lot of unique aspects to both Scheme and Common Lisp.
 
 Have fun! Happy programming!
+
 -Ryan Burnside
